@@ -1,15 +1,17 @@
 <!doctype html>
 <html lang="pt-BR">
 <!--
-  Check-in Baba dos Eletricistas - CAE 2026 (vitrine do design)
-  Mesmo app do codigo.html, com um banco em memoria e 24 participantes ficticios.
-  Funciona em qualquer navegador e no GitHub Pages. Nada e salvo.
+  Check-in Baba dos Eletricistas - CAE 2026 (versao offline)
+  A lista fica salva no proprio aparelho (localStorage): sobrevive ao F5 e a fechar o navegador.
+  Com o sw.js na mesma pasta, abre mesmo sem internet depois do primeiro acesso.
+  Nao sincroniza entre celulares. Nenhum dado de inscrito fica neste arquivo.
 -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#001780">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>Check-in Baba dos Eletricistas - Demonstracao</title>
+<title>Check-in Baba dos Eletricistas</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -307,51 +309,27 @@ main { padding-block: 12px 40px; }
   *, *::before, *::after { transition: none !important; }
 }
 </style>
-<style>.demo-bar{background:var(--soft);color:var(--ink);border-bottom:1px solid var(--line);font-size:13px}.demo-bar .wrap{padding-block:8px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;text-align:center}.demo-bar p{margin:0}.demo-bar b{color:var(--blue-mid)}.demo-bar button{height:32px;padding:0 12px;border-radius:8px;border:1.5px solid var(--blue-mid);background:var(--surface);color:var(--ink);font-weight:700;font-size:13px;cursor:pointer}</style>
 </head>
 <body>
-<div class="demo-bar"><div class="wrap"><p><b>Demonstração</b> com nomes fictícios. Toque à vontade: nada é salvo e tudo volta ao exemplo quando a página recarrega.</p><button type="button" onclick="document.getElementById('fileIn').click()">Testar com a minha planilha (.xlsx)</button></div></div>
 <script>
-/* Modo demonstração: substitui o banco do claude.ai por um banco em memória
-   com participantes fictícios. Nada é salvo; recarregar a página volta ao exemplo. */
+/* Modo offline: a lista fica salva no próprio aparelho (localStorage).
+   Sobrevive ao F5 e a fechar o navegador. Não sincroniza entre celulares. */
 (function () {
-  var agora = Date.now();
-  var min = function (m) { return new Date(agora - m * 60000).toISOString(); };
-  var exemplo = [
-    ['Antônio Carlos Ribeiro', 'Futsal (Goleiro)', 'Sim', '', 'presente', true, 52],
-    ['Bruno Santana Lima', 'Futsal (Linha)', 'Sim', '', 'presente', true, 47],
-    ['Caio Menezes Rocha', 'Futsal (Linha)', 'Não', '', 'presente', false, 44],
-    ['Cláudio Brito Nascimento', 'Futsal (Linha)', 'Sim', 'Asma', 'pendente', false, 0],
-    ['Daniela Souza Prado', 'Só Confraternizar', 'Sim', '', 'presente', true, 39],
-    ['Edvaldo Pereira Matos', 'Dominó', 'Sim', '', 'pendente', false, 0],
-    ['Fabrício Oliveira Dantas', 'Dominó', 'Não', '', 'presente', false, 31],
-    ['Gilmar Costa Bastos', 'Dominó', 'Sim', '', 'ausente', false, 0],
-    ['Helena Freitas Moura', 'Só Confraternizar', 'Sim', '', 'pendente', false, 0],
-    ['Ítalo Reis Cardoso', 'Futsal (Linha)', 'Sim', '', 'pendente', false, 0],
-    ['Jorge Luís Teixeira', 'Dama', 'Sim', 'Hipertensão', 'presente', true, 26],
-    ['Kátia Almeida Rangel', 'Só Confraternizar', 'Não', '', 'pendente', false, 0],
-    ['Leonardo Pires Galvão', 'Futsal (Linha)', 'Sim', '', 'pendente', false, 0],
-    ['Marcelo Andrade Queiroz', 'Dama', 'Sim', '', 'pendente', false, 0],
-    ['Nilton Barbosa Sales', 'Dominó', 'Sim', '', 'presente', false, 18],
-    ['Otávio Santos Vieira', 'Futsal (Goleiro)', 'Sim', '', 'pendente', false, 0],
-    ['Paulo Henrique Cunha', 'Futsal (Linha)', 'Sim', '', 'presente', true, 12],
-    ['Raimunda Lopes Bittencourt', 'Só Confraternizar', 'Não', 'Intolerância a lactose', 'pendente', false, 0],
-    ['Sérgio Moreira Falcão', 'Dominó', 'Sim', '', 'pendente', false, 0],
-    ['Tiago Nunes Albuquerque', 'Futsal (Linha)', 'Sim', '', 'pendente', false, 0],
-    ['Ubiratan Castro Leal', 'Dama', 'Não', '', 'pendente', false, 0],
-    ['Valdir Gomes Peixoto', 'Dominó', 'Sim', '', 'pendente', false, 0],
-    ['Washington Silva Couto', 'Futsal (Linha)', 'Sim', '', 'presente', false, 6],
-    ['Zélia Fonseca Amaral', 'Só Confraternizar', 'Sim', '', 'pendente', false, 0]
-  ];
+  var KEY = 'baba-eletricistas-cae-2026';
   var store = {};
-  exemplo.forEach(function (p, i) {
-    var n = i + 1;
-    store['pessoas/p' + String(n).padStart(2, '0')] = {
-      n: n, nome: p[0], mod: p[1], whats: '(71) 90000-' + String(1000 + n).slice(1), cae: p[2], saude: p[3],
-      status: p[4], sorteio: p[5], chegada: p[4] === 'presente' ? min(p[6]) : null, por: null, extra: false
-    };
-  });
-  store['evento/estado'] = { finalizado: false, em: null, por: null };
+  var podeSalvar = true;
+  try {
+    var bruto = localStorage.getItem(KEY);
+    if (bruto) store = JSON.parse(bruto) || {};
+    localStorage.setItem(KEY + ':teste', '1');
+    localStorage.removeItem(KEY + ':teste');
+  } catch (e) { podeSalvar = false; }
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
+
+  function gravar() {
+    try { localStorage.setItem(KEY, JSON.stringify(store)); }
+    catch (e) { throw { code: 'storage', message: 'localStorage indisponível' }; }
+  }
 
   var listeners = [];
   function snapDoc(path) {
@@ -366,18 +344,34 @@ main { padding-block: 12px 40px; }
       } else l.cb(snapDoc(l.path));
     });
   }
-  var espera = function () { return new Promise(function (r) { setTimeout(r, 60); }); };
+  /* Outra aba aberta no mesmo aparelho mudou a lista: recarrega daqui também. */
+  window.addEventListener('storage', function (e) {
+    if (e.key !== KEY) return;
+    try { store = JSON.parse(e.newValue || '{}') || {}; } catch (err) { return; }
+    emit();
+  });
+
+  function escrever(path, valor) {
+    var antes = store[path];
+    if (valor === undefined) delete store[path]; else store[path] = valor;
+    try { gravar(); }
+    catch (e) { if (antes === undefined) delete store[path]; else store[path] = antes; throw e; }
+    emit();
+  }
   function docRef(path) {
     return {
       id: path.split('/').pop(), path: path,
       get: async function () { return snapDoc(path); },
-      set: async function (d) { await espera(); store[path] = JSON.parse(JSON.stringify(d)); emit(); },
-      update: async function (d) { await espera(); if (!store[path]) throw { code: 'invalid_argument', message: 'missing' }; store[path] = Object.assign({}, store[path], JSON.parse(JSON.stringify(d))); emit(); },
-      delete: async function () { await espera(); delete store[path]; emit(); },
-      onSnapshot: function (cb) { listeners.push({ kind: 'doc', path: path, cb: cb }); setTimeout(emit, 30); return function () {}; }
+      set: async function (d) { escrever(path, JSON.parse(JSON.stringify(d))); },
+      update: async function (d) {
+        if (!store[path]) throw { code: 'invalid_argument', message: 'missing' };
+        escrever(path, Object.assign({}, store[path], JSON.parse(JSON.stringify(d))));
+      },
+      delete: async function () { escrever(path, undefined); },
+      onSnapshot: function (cb) { listeners.push({ kind: 'doc', path: path, cb: cb }); setTimeout(emit, 0); return function () {}; }
     };
   }
-  var novoId = function () { return 'x' + Math.random().toString(36).slice(2, 12); };
+  var novoId = function () { return 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); };
   var db = {
     doc: docRef,
     collection: function (path) {
@@ -385,7 +379,7 @@ main { padding-block: 12px 40px; }
         path: path,
         doc: function (id) { return docRef(path + '/' + (id || novoId())); },
         add: async function (d) { var r = docRef(path + '/' + novoId()); await r.set(d); return r; },
-        onSnapshot: function (cb) { listeners.push({ kind: 'col', path: path, cb: cb }); setTimeout(emit, 30); return function () {}; }
+        onSnapshot: function (cb) { listeners.push({ kind: 'col', path: path, cb: cb }); setTimeout(emit, 0); return function () {}; }
       };
     }
   };
@@ -397,7 +391,7 @@ main { padding-block: 12px 40px; }
       a.download = req.filename;
       document.body.appendChild(a);
       a.click();
-      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 3000);
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
       return { status: 'saved' };
     }
   };
@@ -410,6 +404,19 @@ main { padding-block: 12px 40px; }
       return null;
     }
   };
+
+  if (!podeSalvar) {
+    document.addEventListener('DOMContentLoaded', function () {
+      var aviso = document.createElement('p');
+      aviso.className = 'notice';
+      aviso.style.cssText = 'margin:0;border-radius:0;text-align:center;background:var(--bad-bg);color:var(--bad-ink);font-weight:700';
+      aviso.textContent = 'Este navegador não está salvando a lista (aba anônima ou sem espaço). Abra o link numa aba normal antes de usar.';
+      document.body.insertBefore(aviso, document.body.firstChild);
+    });
+  }
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
 })();
 
 </script>
@@ -516,7 +523,7 @@ main { padding-block: 12px 40px; }
   <ul class="list" id="list" aria-label="Participantes"></ul>
   <div class="empty" id="empty"><p>Carregando a lista de inscritos…</p></div>
   <input type="file" id="fileIn" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
-  <p class="foot" id="foot" hidden>Toque no nome para ver WhatsApp, saúde e outras opções. A lista atualiza sozinha em todos os celulares.</p>
+  <p class="foot" id="foot" hidden>Toque no nome para ver WhatsApp, saúde e outras opções. Tudo fica salvo neste aparelho, mesmo sem internet.</p>
   <div class="tools" id="tools" hidden>
     <button type="button" class="btn outline" id="btnImport">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/></svg>
@@ -740,7 +747,8 @@ main { padding-block: 12px 40px; }
   function writeError(e) {
     var c = e && e.code;
     if (c === 'invalid_argument' && S.canWrite === null) { S.canWrite = false; render(); return; }
-    if (c === 'revoked') toast('Seu acesso a esta lista mudou. Recarregue a página.');
+    if (c === 'storage') toast('O navegador não deixou salvar. Não use aba anônima e confira o espaço do celular.');
+    else if (c === 'revoked') toast('Seu acesso a esta lista mudou. Recarregue a página.');
     else if (c === 'resource_exhausted') toast('Muitos toques seguidos. Espere um instante e tente de novo.');
     else if (c === 'quota_exceeded') toast('A lista chegou ao limite de armazenamento.');
     else toast('Não consegui salvar. Confira a internet e toque de novo.');
@@ -845,7 +853,7 @@ main { padding-block: 12px 40px; }
         '<div class="sheet-actions"><button type="button" class="btn quiet" data-sheet="close">Voltar</button><button type="button" class="btn primary" data-sheet="confirm">Reabrir</button></div>';
     } else if (kind === 'remove') {
       h = '<h2 id="sheetTitle">Remover ' + esc(cleanName(p.nome)) + '?</h2>' +
-        '<p>Use isto só se a pessoa foi adicionada por engano. Ela sai da lista em todos os celulares.</p>' +
+        '<p>Use isto só se a pessoa foi adicionada por engano. Ela sai da lista.</p>' +
         '<div class="sheet-actions"><button type="button" class="btn quiet" data-sheet="close">Voltar</button><button type="button" class="btn danger" data-sheet="confirm">Remover</button></div>';
     } else if (kind === 'import') {
       var R = S.importRows || [], groups = {};

@@ -2,12 +2,12 @@
 <html lang="pt-BR">
 <!--
   Check-in Baba dos Eletricistas - CAE 2026 (vitrine do design)
-  Mesmo app do codigo.html, com um banco em memoria e 24 participantes ficticios.
-  Funciona em qualquer navegador e no GitHub Pages. Nada e salvo.
+  Mesmo app, com um banco em memoria e 24 participantes ficticios. Nada e salvo.
 -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#001780">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Check-in Baba dos Eletricistas - Demonstracao</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -516,7 +516,7 @@ main { padding-block: 12px 40px; }
   <ul class="list" id="list" aria-label="Participantes"></ul>
   <div class="empty" id="empty"><p>Carregando a lista de inscritos…</p></div>
   <input type="file" id="fileIn" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
-  <p class="foot" id="foot" hidden>Toque no nome para ver WhatsApp, saúde e outras opções. A lista atualiza sozinha em todos os celulares.</p>
+  <p class="foot" id="foot" hidden>Toque no nome para ver WhatsApp, saúde e outras opções.</p>
   <div class="tools" id="tools" hidden>
     <button type="button" class="btn outline" id="btnImport">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/></svg>
@@ -740,7 +740,8 @@ main { padding-block: 12px 40px; }
   function writeError(e) {
     var c = e && e.code;
     if (c === 'invalid_argument' && S.canWrite === null) { S.canWrite = false; render(); return; }
-    if (c === 'revoked') toast('Seu acesso a esta lista mudou. Recarregue a página.');
+    if (c === 'storage') toast('O navegador não deixou salvar. Não use aba anônima e confira o espaço do celular.');
+    else if (c === 'revoked') toast('Seu acesso a esta lista mudou. Recarregue a página.');
     else if (c === 'resource_exhausted') toast('Muitos toques seguidos. Espere um instante e tente de novo.');
     else if (c === 'quota_exceeded') toast('A lista chegou ao limite de armazenamento.');
     else toast('Não consegui salvar. Confira a internet e toque de novo.');
@@ -845,7 +846,7 @@ main { padding-block: 12px 40px; }
         '<div class="sheet-actions"><button type="button" class="btn quiet" data-sheet="close">Voltar</button><button type="button" class="btn primary" data-sheet="confirm">Reabrir</button></div>';
     } else if (kind === 'remove') {
       h = '<h2 id="sheetTitle">Remover ' + esc(cleanName(p.nome)) + '?</h2>' +
-        '<p>Use isto só se a pessoa foi adicionada por engano. Ela sai da lista em todos os celulares.</p>' +
+        '<p>Use isto só se a pessoa foi adicionada por engano. Ela sai da lista.</p>' +
         '<div class="sheet-actions"><button type="button" class="btn quiet" data-sheet="close">Voltar</button><button type="button" class="btn danger" data-sheet="confirm">Remover</button></div>';
     } else if (kind === 'import') {
       var R = S.importRows || [], groups = {};

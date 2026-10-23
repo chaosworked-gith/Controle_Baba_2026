@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="pt-BR">
 <!--
-  Check-in Baba dos Eletricistas - CAE 2026 (codigo do app)
+  Check-in Baba dos Eletricistas - CAE 2026 (versao claude.ai)
   Roda dentro do claude.ai como Artifact, com as capacidades db (lista compartilhada
-  entre celulares), user e downloads (XLSX e TXT). Aberto fora do claude.ai, mostra
-  um aviso e nao carrega a lista.
+  entre celulares), user e downloads (XLSX e TXT). Precisa de internet.
   Nenhum dado de inscrito fica neste arquivo: a lista entra pelo botao "Carregar planilha".
 -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#001780">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Check-in Baba dos Eletricistas</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -638,7 +638,8 @@ main { padding-block: 12px 40px; }
   function writeError(e) {
     var c = e && e.code;
     if (c === 'invalid_argument' && S.canWrite === null) { S.canWrite = false; render(); return; }
-    if (c === 'revoked') toast('Seu acesso a esta lista mudou. Recarregue a página.');
+    if (c === 'storage') toast('O navegador não deixou salvar. Não use aba anônima e confira o espaço do celular.');
+    else if (c === 'revoked') toast('Seu acesso a esta lista mudou. Recarregue a página.');
     else if (c === 'resource_exhausted') toast('Muitos toques seguidos. Espere um instante e tente de novo.');
     else if (c === 'quota_exceeded') toast('A lista chegou ao limite de armazenamento.');
     else toast('Não consegui salvar. Confira a internet e toque de novo.');
