@@ -259,6 +259,7 @@ main { padding-block: 12px 40px; }
 .empty p { margin: 0; max-width: 46ch; }
 .empty .hint { font-size: 13px; }
 .foot { margin: 20px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+.tools { display: flex; justify-content: center; margin-top: 14px; }
 
 /* Sheet + toast */
 .sheet {
@@ -414,6 +415,12 @@ main { padding-block: 12px 40px; }
   <div class="empty" id="empty"><p>Carregando a lista de inscritos…</p></div>
   <input type="file" id="fileIn" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
   <p class="foot" id="foot" hidden>Toque no nome para ver WhatsApp, saúde e outras opções. A lista atualiza sozinha em todos os celulares.</p>
+  <div class="tools" id="tools" hidden>
+    <button type="button" class="btn outline" id="btnImport">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/></svg>
+      Carregar outra planilha (.xlsx)
+    </button>
+  </div>
 </main>
 
 <div class="sheet" id="sheet" hidden>
@@ -557,6 +564,7 @@ main { padding-block: 12px 40px; }
 
     listEl.innerHTML = rows.map(rowHtml).join('');
     footEl.hidden = !rows.length;
+    $('#tools').hidden = !(S.loaded && !ro && list.length && !fin);
 
     if (!S.loaded && !S.noDb) {
       emptyEl.hidden = false;
@@ -741,10 +749,12 @@ main { padding-block: 12px 40px; }
       var R = S.importRows || [], groups = {};
       R.forEach(function (r) { var g = modLabel(r.mod).split(' · ')[0]; groups[g] = (groups[g] || 0) + 1; });
       var parts = Object.keys(groups).map(function (g) { return groups[g] + ' ' + esc(g); });
-      h = '<h2 id="sheetTitle">Carregar ' + R.length + ' pessoas?</h2>' +
+      var replacing = S.people.length > 0;
+      h = '<h2 id="sheetTitle">' + (replacing ? 'Substituir a lista atual?' : 'Carregar ' + R.length + ' pessoas?') + '</h2>' +
         '<p>Encontrei <b>' + R.length + ' pessoas</b> na aba “' + esc(S.importSheet) + '”' + (parts.length ? ': ' + parts.join(', ') + '.' : '.') + '</p>' +
         '<p>Começa com ' + R.slice(0, 3).map(function (r) { return '<b>' + esc(r.nome) + '</b>'; }).join(', ') + '.</p>' +
-        '<div class="sheet-actions"><button type="button" class="btn quiet" data-sheet="close">Cancelar</button><button type="button" class="btn primary" data-sheet="confirm">Carregar lista</button></div>';
+        (replacing ? '<p>A lista atual tem <b>' + c.todos + ' pessoas</b> e <b>' + c.presente + ' check-ins</b>. Ela será trocada pela nova e todos começam em <b>faltam chegar</b>.</p>' : '') +
+        '<div class="sheet-actions"><button type="button" class="btn quiet" data-sheet="close">Cancelar</button><button type="button" class="btn ' + (replacing ? 'danger' : 'primary') + '" data-sheet="confirm">' + (replacing ? 'Substituir lista' : 'Carregar lista') + '</button></div>';
     } else if (kind === 'add') {
       h = '<h2 id="sheetTitle">Adicionar pessoa</h2>' +
         '<p>Para quem chegou e não estava inscrito. A pessoa já entra com check-in.</p>' +
@@ -813,9 +823,16 @@ main { padding-block: 12px 40px; }
         var jobs = S.importRows.map(function (r, i) {
           return { id: 'p' + String(i + 1).padStart(width, '0'), data: { n: i + 1, nome: r.nome, mod: r.mod, whats: r.whats, cae: r.cae, saude: r.saude, status: 'pendente', sorteio: false, chegada: null, por: null, extra: false } };
         });
+        var keep = {};
+        jobs.forEach(function (j) { keep[j.id] = 1; });
+        var stale = S.people.filter(function (p) { return !keep[p.id]; }).map(function (p) { return p.id; });
         S.importing = true;
         sheetCard.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
         var worker = async function () {
+          while (stale.length) {
+            var sid = stale.shift();
+            await attempt(function () { return db.doc('pessoas/' + sid).delete(); });
+          }
           while (jobs.length) {
             var j = jobs.shift();
             await setRetry(db.doc('pessoas/' + j.id), j.data);
@@ -826,7 +843,11 @@ main { padding-block: 12px 40px; }
         try { await Promise.all([worker(), worker(), worker()]); } finally { S.importing = false; }
         await attempt(function () { return db.doc('evento/estado').set({ finalizado: false, em: null, por: S.uid }); });
         S.importRows = null;
+        S.local.clear();
+        S.open = null;
+        disarm();
         closeSheet();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         toast(total + ' pessoas carregadas na lista');
       }
     } catch (e) {
@@ -941,6 +962,7 @@ main { padding-block: 12px 40px; }
     }
     throw fail('Não achei a coluna “Nome completo” na planilha.');
   }
+  $('#btnImport').addEventListener('click', function () { if (!readOnly()) $('#fileIn').click(); });
   $('#fileIn').addEventListener('change', async function (e) {
     var f = e.target.files && e.target.files[0];
     e.target.value = '';
